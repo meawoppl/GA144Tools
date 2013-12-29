@@ -1,5 +1,6 @@
 import numpy as np
 from pylab import pcolor, figure, subplot, show
+import random
 
 import bitUtils as bu
 import FA18A_constants, FA18A_util
@@ -42,6 +43,7 @@ class FA18A(object):
             self.installROM(rom)
 
         self.name = nodeName
+        self.intefaces = {}
 
         self.reset()
 
@@ -142,6 +144,42 @@ class FA18A(object):
             self._setIO(addr, value)
         else:
             raise RuntimeError("Trying to write to address %i 0x%05X = %i" % (addr, addr, value))
+
+    def registerInterface(self, interfaceName, interface):
+        self.interfaces[interfaceName] = interface
+
+    def _derefAddrToInterfaces(self, addr):
+        assert addr in FA18A_constants.ioAddressToName, "WTF Not an io address"
+
+        addressName = FA18A_constants.ioAddressToName[addr]
+        if addressName in ["data", "io"]:
+            raise NotImplemented("TODO!")
+
+        # Get a list of the interfaces we are trying currently
+        return [self.interfaces[iName] for iName in addressName.replace("-", "")]
+
+    def _isAddrGettable(self, addr):
+        '''Check to see if we have any readable interfaces.
+        Also register that we are reading.'''
+        interfaces = self._derefAddrToInterfaces(addr)
+        [i.startReading() for i in interfaces]
+        return any([i.canReadImmidiately() for i in interfaces])
+
+    def _getIO(self, addr):
+        '''NB: Confusing.  This funciton is only called when there
+        is by definition a readable interface.'''
+        # Get all the interfaces that are referenced by this address
+        interfaces = self._derefAddrToInterfaces(addr)
+
+        # filter for the ones that are readable
+        availableToRead = [i for i in interfaces if i.canReadImmidiately()]
+
+        # We can only read one, so:
+        luckyInterface = random.choice(availableToRead)
+
+        result = luckyInterface.getResult()
+        [i.finishReading() for i in interfaces]
+        return result
 
     def installROM(self, rom):
         assert len(rom) == 64, "You wrong is the ROM size."
