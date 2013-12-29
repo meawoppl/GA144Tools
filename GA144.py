@@ -36,6 +36,8 @@ class GA144(object):
     def __init__(self, romFile="GA144.rom"):
         self._setupNodes()
         self._setupSched()
+        self._setupInterconnects()
+        self._setupExtraconnects()
         self.chipReset()
 
     def _setupNodes(self):
@@ -47,6 +49,12 @@ class GA144(object):
 
         # Put them in their starting locations
         [node.jumpToWarm() for node in self.cores.values()]
+
+    def _setupInterconnects(self):
+        pass
+
+    def _setupExtraconnects(self):
+        pass
 
     def _setupSched(self):
         # Now create a class to track what runs when
