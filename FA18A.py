@@ -159,14 +159,17 @@ class FA18A(object):
         return [self.interfaces[iName] for iName in addressName.replace("-", "")]
 
     def _isAddrGettable(self, addr):
-        '''Check to see if we have any readable interfaces.
-        Also register that we are reading.'''
         interfaces = self._derefAddrToInterfaces(addr)
         [i.startReading() for i in interfaces]
         return any([i.canReadImmidiately() for i in interfaces])
 
+    def _isAddrSettable(self, addr):
+        interfaces = self._derefAddrToInterfaces(addr)
+        [i.startWriting() for i in interfaces]
+        return any([i.canWriteImmidiately() for i in interfaces])
+
     def _getIO(self, addr):
-        '''NB: Confusing.  This funciton is only called when there
+        '''NB: Confusing.  This function is only called when there
         is by definition a readable interface.'''
         # Get all the interfaces that are referenced by this address
         interfaces = self._derefAddrToInterfaces(addr)
@@ -174,12 +177,31 @@ class FA18A(object):
         # filter for the ones that are readable
         availableToRead = [i for i in interfaces if i.canReadImmidiately()]
 
+        # There should be are least 1 that can read
+        assert len(availableToRead) > 0, "Consistancy Failure"
+
         # We can only read one, so:
         luckyInterface = random.choice(availableToRead)
 
-        result = luckyInterface.getResult()
+        result = luckyInterface.doRead()
         [i.finishReading() for i in interfaces]
         return result
+
+    def _setIO(self, addr, value):
+        '''NB: Confusing.  This function is only called when there
+        is by definition a writable interface.'''
+        # Get all the interfaces that are referenced by this address
+        interfaces = self._derefAddrToInterfaces(addr)
+
+        # filter for the ones that are readable
+        availableToWrite = [i for i in interfaces if i.canWriteImmidiately()]
+
+        # There should be are least 1 that can read
+        assert len(availableToWrite) > 0, "Consistancy Failure"
+
+        # We can to all the available so:
+        [i.doWrite(value) for i in availableToWrite]
+        [i.finishWriting() for i in interfaces]
 
     def installROM(self, rom):
         assert len(rom) == 64, "You wrong is the ROM size."

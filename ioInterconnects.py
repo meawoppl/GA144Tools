@@ -1,3 +1,4 @@
+import numpy as np
 # This is the embodiment of a node-node interconnect
 # There are several considerations to getting this class "correct"
 # that span this file and the GA144 embodiment
@@ -108,8 +109,13 @@ class NodeInterConnect(object):
         # Nuke the Current Data
         cd = self.currentData
         self.currentData = None
-        
         return cd
+
+    def doRead(self):
+        return self.currentData
+
+    def doWrite(self, data):
+        self.currentData = np.array(data)
 
     def startReading(self, pInstance):
         if self.isAnyNodeReading:
