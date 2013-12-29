@@ -18,7 +18,7 @@ GA144romsBlock = GA144roms.reshape((8, 18, -1))
 
 
 def getROMByCoord(x, y):
-    return GA144roms[x, y, :]
+    return GA144romsBlock[x, y, :]
 
 
 def makeNodeByCoord(x, y):

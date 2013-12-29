@@ -15,13 +15,13 @@ class OperationSched(object):
         self.schedule = []
 
     def passTime(self, deltaTime):
-        assert deltaTime > 0, "No Time Travel Please!"
+        assert deltaTime >= 0, "No Time Travel Please!"
         self.time += deltaTime
 
     def whatTime(self):
         return self.time
 
-    def schedule(self, deltaTime, functionToCall, args, kwargs):
+    def enter(self, deltaTime, functionToCall, args=tuple(), kwargs=dict()):
         # Make a uuid for this event
         idee = newUUID()
 
@@ -37,12 +37,12 @@ class OperationSched(object):
     def runEvent(self):
         # Execute a single event
         eventTime, eventID = heapq.heappop(self.schedule)
-        functionToCall, args, kwargs = self.events[eventID]
+        functionToCall, args, kwargs = self.events.pop(eventID)
 
         functionToCall(*args, **kwargs)
 
     def getNextEventTime(self):
-        return self.schedule[0][0] if len(self.schedule) == 0 else None
+        return self.schedule[0][0]
 
     def run(self, maxTime=float("inf"), maxEventCount=float("inf")):
         eventsRun = 0
@@ -54,10 +54,14 @@ class OperationSched(object):
             if len(self.schedule) == 0:
                 break
 
+            # Move time forward as necessary
             theFuture = self.getNextEventTime() - self.whatTime()
             self.passTime(theFuture)
 
+            # Run the event
             self.runEvent()
+
+            # Update our semaphores for completion
             eventsRun += 1
             timePassed += theFuture
 
@@ -68,7 +72,7 @@ def maybeScheduleStep(pInstance, schedular):
     if nextTime is None:
         return
     # Resechedule next operation to be run
-    schedular.enter(nextTime, 1, runStepAndMaybeSchedule, (pInstance, schedular))
+    schedular.enter(nextTime, runStepAndMaybeSchedule, (pInstance, schedular))
 
 
 def runStepAndMaybeSchedule(pInstance, schedular):
@@ -119,3 +123,8 @@ class GA144(object):
         [maybeScheduleStep(node, self.scheduler) for node in self.cores.values()]
 
         self.scheduler.run()
+
+
+if __name__ == "__main__":
+    p = GA144()
+    p.run()
