@@ -1,38 +1,65 @@
-import itertools, sched
-import FA18A, FA18A_rom
+import heapq, itertools, uuid
+import GA144_rom
 
-# Interface designed to match that of
-# sched builtin module, but with added
-# functionality for breaking and time simulation
-
-
-class OperationSchedular(object):
-    def __init__(self, timeGetter, timeProgressor):
-        pass
+# A quick UUID lambda to get a hex string uuid
+newUUID = lambda: uuid.uuid4().hex
 
 
-class TimeKeeper(object):
-    '''This class stores a time pointer that progresses when the
-    scheduler requests it.  It also stores the time internally.
-    Later on I will add time based break points here.'''
-    def __init__(self, startTime=0):
-        self.t = startTime
+class OperationSched(object):
+    '''This is a class designed to run simulated events,
+    each of which may or may not schedule additional event(s)
+    in the future.'''
+    def __init__(self):
+        self.time = 0
+        self.events = {}
+        self.schedule = []
 
-    def getTime(self):
-        return self.t
+    def passTime(self, deltaTime):
+        assert deltaTime > 0, "No Time Travel Please!"
+        self.time += deltaTime
 
-    def progressTime(self, tyme):
-        self.t += tyme
+    def whatTime(self):
+        return self.time
 
+    def schedule(self, deltaTime, functionToCall, args, kwargs):
+        # Make a uuid for this event
+        idee = newUUID()
 
-def makeNodeByCoord(x, y):
-    '''This is a quick function to make a processor
-    instance based on the x, y location.  It instanciates
-    a vanilla FA18A, then installs a ROM.'''
-    proc = FA18A.FA18A()
-    rom = FA18A_rom.getROMByCoord(x, y)
-    proc.installROM(rom)
-    return proc
+        # Archive the function, args and kwargs
+        self.events[idee] = (functionToCall, args, kwargs)
+
+        # Enter the UUID in the heap
+        eventTuple = (self.whatTime() + deltaTime, idee)
+        heapq.heappush(self.schedule, eventTuple)
+
+        return idee
+
+    def runEvent(self):
+        # Execute a single event
+        eventTime, eventID = heapq.heappop(self.schedule)
+        functionToCall, args, kwargs = self.events[eventID]
+
+        functionToCall(*args, **kwargs)
+
+    def getNextEventTime(self):
+        return self.schedule[0][0] if len(self.schedule) == 0 else None
+
+    def run(self, maxTime=float("inf"), maxEventCount=float("inf")):
+        eventsRun = 0
+        timePassed = 0
+
+        # Actual Run Loop
+        while (timePassed < maxTime) and (eventsRun < maxEventCount):
+            # Give up if we run out of events
+            if len(self.schedule) == 0:
+                break
+
+            theFuture = self.getNextEventTime() - self.whatTime()
+            self.passTime(theFuture)
+
+            self.runEvent()
+            eventsRun += 1
+            timePassed += theFuture
 
 
 def maybeScheduleStep(pInstance, schedular):
@@ -65,17 +92,14 @@ class GA144(object):
     5) Let the schedular take over'''
 
     def __init__(self, romFile="GA144.rom"):
-        # Make an instance of the timekeeper
-        self.timeKeep = TimeKeeper()
-        # Now create a python schedular that inteacts with the
-        # handles provided by our TimeKeeper class
-        self.scheduler = sched.scheduler(self.timeKeep.getTime, self.timeKeep.progressTime)
+        # Now create a python schedular that inteacts with the handles provided
+        self.scheduler = OperationSched()
 
         # Make an iterator that has the array geometry of 8 x 18
         cooridinateIterator = itertools.product(range(8), range(18))
 
         # Map the iterator over the coordinates, making new nodes
-        self.cores = {coord: makeNodeByCoord(*coord) for coord in cooridinateIterator}
+        self.cores = {coord: GA144_rom.makeNodeByCoord(*coord) for coord in cooridinateIterator}
 
         print([str(core) for core in self.cores.items()])
 

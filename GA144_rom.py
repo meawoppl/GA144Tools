@@ -1,4 +1,5 @@
 import numpy as np
+import FA18A
 
 
 def romFileLoader():
@@ -18,3 +19,12 @@ GA144romsBlock = GA144roms.reshape((8, 18, -1))
 
 def getROMByCoord(x, y):
     return GA144roms[x, y, :]
+
+
+def makeNodeByCoord(x, y):
+    '''This is a quick function to make a processor
+    instance based on the x, y location.  It instanciates
+    a vanilla FA18A, then installs a ROM.'''
+    newNode = FA18A.FA18A()
+    newNode.installROM(getROMByCoord(x, y))
+    return newNode
