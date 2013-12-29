@@ -34,20 +34,32 @@ class GA144(object):
     5) Let the schedular take over'''
 
     def __init__(self, romFile="GA144.rom"):
-        # Now create a python schedular that inteacts with the handles provided
-        self.scheduler = OperationSched()
+        self._setupNodes()
+        self._setupSched()
+        self.chipReset()
 
+    def _setupNodes(self):
         # Make an iterator that has the array geometry of 8 x 18
         cooridinateIterator = itertools.product(range(8), range(18))
 
         # Map the iterator over the coordinates, making new nodes
         self.cores = {coord: GA144_rom.makeNodeByCoord(*coord) for coord in cooridinateIterator}
 
-        print([str(core) for core in self.cores.items()])
-
         # Put them in their starting locations
         [node.jumpToWarm() for node in self.cores.values()]
 
+    def _setupSched(self):
+        # Now create a class to track what runs when
+        self.scheduler = OperationSched()
+
+        # Register all the nodes in the schedular
+        [maybeScheduleStep(node, self.scheduler) for node in self.cores.values()]
+
+    def chipReset(self):
+        # Reset all nodes on the chip
+        [node.reset() for node in self.cores.values()]
+
+    def fakeBootStream():
         # Fake the boot stream, for now just based on the 2 wire async boot
         # asyncNode = self.cores[(7, 8)]
 
@@ -56,10 +68,9 @@ class GA144(object):
         # running the jump to get get to the right port read pattern
         # More accurate to start the schedular earlier, the fake the
         # boot stream as an event in it.
+        pass
 
-        # Register all the nodes in the schedular
-        [maybeScheduleStep(node, self.scheduler) for node in self.cores.values()]
-
+    def run(self):
         self.scheduler.run()
 
 
