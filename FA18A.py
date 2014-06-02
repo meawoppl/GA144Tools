@@ -74,24 +74,24 @@ class FA18A(object):
         self.memNameToID = {}
 
         # Ram + ROM
-        self.ram = self.reserveMem(0, 128, "RAM")
-        self.rom = self.reserveMem(128, 128, "ROM")
+        self.ram = self._reserveMem(0, 128, "RAM")
+        self.rom = self._reserveMem(128, 128, "ROM")
 
         # IO/Register Land
         for arrdName, addr in FA18A_constants.ioNameToAddress.items():
-            self.commPorts = self.reserveMem(addr, 1, "IO")
+            self.commPorts = self._reserveMem(addr, 1, "IO")
 
         # NB: Offsets below are 100% made up.
 
         # Return Stack
         returnStackStart = 279
-        self.returnStackArray = self.reserveMem(returnStackStart, 8, "RET")
+        self.returnStackArray = self._reserveMem(returnStackStart, 8, "RET")
         self.returnStack = ArrayBasedStack(self.returnStackArray)
         self.R = self.reserveMem(returnStackStart + 8, 1, "RET")
 
         # Data Stack
         dataStackStart = 310
-        self.dataStackArray = self.reserveMem(dataStackStart, 10, "Data")
+        self.dataStackArray = self._reserveMem(dataStackStart, 10, "Data")
         self.dataStack = ArrayBasedStack(self.dataStackArray)
 
         # These registers done with the following ackward convention in insure array views
@@ -100,14 +100,14 @@ class FA18A(object):
 
         # General Registers
         miscRegStart = 471
-        self.A = self.reserveMem(miscRegStart, 1, "REG")
-        self.B = self.reserveMem(miscRegStart + 2, 1, "REG")   # Write only?
+        self.A = self._reserveMem(miscRegStart, 1, "REG")
+        self.B = self._reserveMem(miscRegStart + 2, 1, "REG")   # Write only?
 
         # Instruction Register
-        self.I = self.reserveMem(miscRegStart + 4, 1, "REG")
+        self.I = self._reserveMem(miscRegStart + 4, 1, "REG")
 
         # Program Counter
-        self.P = self.reserveMem(miscRegStart + 6, 1, "PC")
+        self.P = self._reserveMem(miscRegStart + 6, 1, "PC")
 
         # MRG TODO: this survives reset? (0, 1, unk?)
         self.carryBit = 0

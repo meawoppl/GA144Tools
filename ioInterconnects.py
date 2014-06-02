@@ -125,9 +125,6 @@ class NodeInterConnect(object):
     def finishReading(self, pInstance):
         self.isAnyNodeReading = False
 
-    def transact():
-        pass
-
     def updateProcFlags(self):
         pass
 

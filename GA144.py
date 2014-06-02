@@ -4,6 +4,16 @@ import GA144_rom
 from simSched import OperationSched
 
 
+'''The goal of this module is to emulate a GA144 processor,
+   comprising of 144 FA18A nodes.  To do this we:
+   0) Write some infrastructure code to feed the others
+   1) Make a schedular to deal with all the async handling
+   2) Invoke and populate the 144 nodes with their respective ROM's
+   3) Register all their IO read deps
+   4) Run (fake) one or more boot streams
+   5) Let the schedular take over'''
+
+
 def maybeScheduleStep(pInstance, schedular):
     nextTime = pInstance.getNextStepTime()
     # Waiting/Blocked on IO
@@ -24,15 +34,6 @@ def runStepAndMaybeSchedule(pInstance, schedular):
 
 
 class GA144(object):
-    '''The goal of this module is to emulate a GA144 processor,
-    comprising of 144 FA18A nodes.  To do this we:
-    0) Write some infrastructure code to feed the others
-    1) Make a schedular to deal with all the async handling
-    2) Invoke and populate the 144 nodes with their respective ROM's
-    3) Register all their IO read deps
-    4) Run (fake) one or more boot streams
-    5) Let the schedular take over'''
-
     def __init__(self, romFile="GA144.rom"):
         self._setupNodes()
         self._setupSched()
