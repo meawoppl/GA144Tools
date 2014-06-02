@@ -19,8 +19,8 @@ opCodeBitsToClass = { op.code : op for op in FA18A_functions.allOpList }
 def getOp(rep):
     if isinstance(rep, bitarray):
         if rep.length() == 3:
-            rep =  bitarray([False, False]) + rep # + bitarray([False, False])
-        return opCodeBitsToClass[ baToInt(rep) ]
+            rep =  bitarray(rep + bitarray([False, False]))
+        return opCodeBitsToClass[ baToInt(rep[::-1]) ]
     else:
         return opCodeBitsToClass[rep]
 
